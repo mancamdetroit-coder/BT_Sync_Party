@@ -5,12 +5,10 @@ import android.bluetooth.BluetoothServerSocket
 import android.bluetooth.BluetoothSocket
 import android.content.Context
 import android.net.Uri
-import android.os.Environment
 import org.json.JSONObject
-import java.io.File
-import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.charset.StandardCharsets
 import java.util.UUID
 
 class BluetoothSyncManager(
@@ -66,8 +64,9 @@ class BluetoothSyncManager(
                     put("action", action)
                     put("pos", positionMs)
                 }
-                outputStream?.write((json.toString() + "
-").toByteArray())
+                val data = (json.toString() + "
+").toByteArray(StandardCharsets.UTF_8)
+                outputStream?.write(data)
                 outputStream?.flush()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -83,8 +82,9 @@ class BluetoothSyncManager(
                     put("type", "CHAT")
                     put("msg", message)
                 }
-                outputStream?.write((json.toString() + "
-").toByteArray())
+                val data = (json.toString() + "
+").toByteArray(StandardCharsets.UTF_8)
+                outputStream?.write(data)
                 outputStream?.flush()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -96,20 +96,21 @@ class BluetoothSyncManager(
         if (!isConnected) return
         Thread {
             try {
-                val fileStream = context.contentResolver.openInputStream(fileUri)
+                val fileStream = context.contentResolver.openInputStream(fileUri) ?: return@Thread
                 val header = JSONObject().apply {
                     put("type", "FILE_START")
-                    put("size", fileStream?.available() ?: 0)
+                    put("size", fileStream.available())
                 }
-                outputStream?.write((header.toString() + "
-").toByteArray())
+                val headerData = (header.toString() + "
+").toByteArray(StandardCharsets.UTF_8)
+                outputStream?.write(headerData)
 
-                val buffer = ByteArray(16384) // 16KB Chunks
+                val buffer = ByteArray(16384)
                 var bytesRead: Int
-                while (fileStream?.read(buffer).also { bytesRead = it ?: -1 } != -1) {
+                while (fileStream.read(buffer).also { bytesRead = it } != -1) {
                     outputStream?.write(buffer, 0, bytesRead)
                 }
-                fileStream?.close()
+                fileStream.close()
                 outputStream?.flush()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -119,14 +120,13 @@ class BluetoothSyncManager(
 
     private fun listenForIncomingData() {
         Thread {
-            val buffer = ByteArray(1024)
             val reader = inputStream?.bufferedReader()
             while (isConnected) {
                 try {
                     val line = reader?.readLine() ?: break
                     if (line.startsWith("{")) {
                         val json = JSONObject(line)
-                        when (json.getString("type")) {
+                        when (json.optString("type")) {
                             "SYNC" -> listener.onSyncPacketReceived(
                                 json.getString("action"),
                                 json.getLong("pos")
@@ -139,10 +139,6 @@ class BluetoothSyncManager(
                 }
             }
         }.start()
-    }
-
-    fun showDevicePickerDialog() {
-        // Triggers system Bluetooth pair list dialog
     }
 
     fun cleanup() {

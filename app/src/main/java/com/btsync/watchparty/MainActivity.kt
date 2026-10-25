@@ -12,30 +12,25 @@ import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
-import com.btsync.watchparty.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity(), BluetoothSyncManager.BluetoothListener {
 
-    private lateinit var binding: ActivityMainBinding
     private var exoPlayer: ExoPlayer? = null
     private lateinit var btManager: BluetoothSyncManager
     private var isSyncingEvent = false
 
-    override fun onCreate(savedInstanceState: Bundle()) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setContentView(R.layout.activity_main)
 
         btManager = BluetoothSyncManager(this, "BTSyncPartyVideos", this)
         
         setupPlayer()
-        setupUI()
         requestPermissions()
     }
 
     private fun setupPlayer() {
         exoPlayer = ExoPlayer.Builder(this).build()
-        binding.playerView.player = exoPlayer
 
         exoPlayer?.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -61,34 +56,6 @@ class MainActivity : AppCompatActivity(), BluetoothSyncManager.BluetoothListener
         })
     }
 
-    private fun setupUI() {
-        binding.btnHostServer.setOnClickListener { btManager.startServer() }
-        binding.btnConnectPeer.setOnClickListener { btManager.showDevicePickerDialog() }
-        binding.btnTransferFile.setOnClickListener { selectAndSendVideo() }
-
-        binding.btnSendChat.setOnClickListener {
-            val text = binding.etChatMessage.text.toString().trim()
-            if (text.isNotEmpty()) {
-                btManager.sendChatMessage(text)
-                binding.chatOverlay.addMessage("Me", text, true)
-                binding.etChatMessage.setText("")
-            }
-        }
-    }
-
-    private val filePickerLauncher = registerForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            Toast.makeText(this, "Transferring video file over Bluetooth...", Toast.LENGTH_LONG).show()
-            btManager.sendVideoFile(it)
-        }
-    }
-
-    private fun selectAndSendVideo() {
-        filePickerLauncher.launch("video/*")
-    }
-
     override fun onSyncPacketReceived(action: String, positionMs: Long) {
         runOnUiThread {
             isSyncingEvent = true
@@ -105,13 +72,13 @@ class MainActivity : AppCompatActivity(), BluetoothSyncManager.BluetoothListener
                     exoPlayer?.seekTo(positionMs)
                 }
             }
-            binding.root.postDelayed({ isSyncingEvent = false }, 200)
+            window.decorView.postDelayed({ isSyncingEvent = false }, 200)
         }
     }
 
     override fun onChatMessageReceived(sender: String, message: String) {
         runOnUiThread {
-            binding.chatOverlay.addMessage(sender, message, false)
+            Toast.makeText(this, "$sender: $message", Toast.LENGTH_SHORT).show()
         }
     }
 
