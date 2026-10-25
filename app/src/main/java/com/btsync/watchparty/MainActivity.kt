@@ -12,16 +12,21 @@ import androidx.core.content.ContextCompat
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 
 class MainActivity : AppCompatActivity(), BluetoothSyncManager.BluetoothListener {
 
     private var exoPlayer: ExoPlayer? = null
+    private var playerView: PlayerView? = null
     private lateinit var btManager: BluetoothSyncManager
     private var isSyncingEvent = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        
+        // Programmatically create PlayerView to avoid missing layout/ID compile errors
+        playerView = PlayerView(this)
+        setContentView(playerView)
 
         btManager = BluetoothSyncManager(this, "BTSyncPartyVideos", this)
         
@@ -31,6 +36,7 @@ class MainActivity : AppCompatActivity(), BluetoothSyncManager.BluetoothListener
 
     private fun setupPlayer() {
         exoPlayer = ExoPlayer.Builder(this).build()
+        playerView?.player = exoPlayer
 
         exoPlayer?.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -84,7 +90,7 @@ class MainActivity : AppCompatActivity(), BluetoothSyncManager.BluetoothListener
 
     override fun onVideoFileReceived(fileUri: Uri) {
         runOnUiThread {
-            Toast.makeText(this, "Video File Received & Saved!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Video File Received!", Toast.LENGTH_SHORT).show()
             exoPlayer?.setMediaItem(MediaItem.fromUri(fileUri))
             exoPlayer?.prepare()
         }
