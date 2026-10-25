@@ -59,14 +59,14 @@ class BluetoothSyncManager(
         if (!isConnected) return
         Thread {
             try {
-                val json = JSONObject().apply {
-                    put("type", "SYNC")
-                    put("action", action)
-                    put("pos", positionMs)
-                }
-                val data = (json.toString() + "
-").toByteArray(StandardCharsets.UTF_8)
-                outputStream?.write(data)
+                val json = JSONObject()
+                json.put("type", "SYNC")
+                json.put("action", action)
+                json.put("pos", positionMs)
+                
+                val payload = json.toString() + "\n"
+                val bytes = payload.toByteArray(StandardCharsets.UTF_8)
+                outputStream?.write(bytes)
                 outputStream?.flush()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -78,13 +78,13 @@ class BluetoothSyncManager(
         if (!isConnected) return
         Thread {
             try {
-                val json = JSONObject().apply {
-                    put("type", "CHAT")
-                    put("msg", message)
-                }
-                val data = (json.toString() + "
-").toByteArray(StandardCharsets.UTF_8)
-                outputStream?.write(data)
+                val json = JSONObject()
+                json.put("type", "CHAT")
+                json.put("msg", message)
+                
+                val payload = json.toString() + "\n"
+                val bytes = payload.toByteArray(StandardCharsets.UTF_8)
+                outputStream?.write(bytes)
                 outputStream?.flush()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -97,13 +97,13 @@ class BluetoothSyncManager(
         Thread {
             try {
                 val fileStream = context.contentResolver.openInputStream(fileUri) ?: return@Thread
-                val header = JSONObject().apply {
-                    put("type", "FILE_START")
-                    put("size", fileStream.available())
-                }
-                val headerData = (header.toString() + "
-").toByteArray(StandardCharsets.UTF_8)
-                outputStream?.write(headerData)
+                val json = JSONObject()
+                json.put("type", "FILE_START")
+                json.put("size", fileStream.available())
+                
+                val payload = json.toString() + "\n"
+                val bytes = payload.toByteArray(StandardCharsets.UTF_8)
+                outputStream?.write(bytes)
 
                 val buffer = ByteArray(16384)
                 var bytesRead: Int
