@@ -26,5 +26,5 @@ jobs:
         gradle-version: '8.5'
 
     - name: Build APK with Gradle
-      run: gradle assembleDebug --stacktrace -Dorg.gradle.jvmargs="-Xmx2048m"
+      run: gradle assembleDebug --no-daemon --console=plain --stacktrace -Dorg.gradle.jvmargs="-Xmx2048m"
 
