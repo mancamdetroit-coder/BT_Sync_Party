@@ -19,8 +19,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Accept Android SDK Licenses
-        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+      - name: Pre-accept Android SDK Licenses
+        run: |
+          mkdir -p $ANDROID_HOME/licenses
+          echo "24333f8a637b3702d1927d1506f855978e0cb13a" > $ANDROID_HOME/licenses/android-sdk-license
+          echo "84831b9409646a578f31e577053643734b41ec43" >> $ANDROID_HOME/licenses/android-sdk-license
+          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" > $ANDROID_HOME/licenses/android-sdk-preview-license
+          echo "33b622e74710267a14c3225057079a259d4dce6b" > $ANDROID_HOME/licenses/android-googletv-license
+          echo "6010071946943d237982f2323a5a6f81b1103613" > $ANDROID_HOME/licenses/mips-android-sysimage-license
 
       - name: Generate Gradle Wrapper
         run: gradle wrapper --gradle-version 8.5
